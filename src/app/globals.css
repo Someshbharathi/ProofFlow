@@ -38,6 +38,9 @@ a { color: inherit; text-decoration: none; }
 .dashboard-panel { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
 .dashboard-panel:hover { transform: translateY(-2px); border-color: rgba(167, 139, 250, .24); box-shadow: 0 12px 36px rgba(91, 33, 182, .1); }
 .dashboard-panel:hover .chart-line { filter: drop-shadow(0 0 5px rgba(187, 92, 255, .6)); }
+.auth-input { display: block; width: 100%; height: 42px; border: 1px solid rgba(255,255,255,.1); border-radius: 11px; background: rgba(255,255,255,.035); padding: 0 12px; color: #f8fafc; font-size: 13px; outline: none; transition: border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+.auth-input::placeholder { color: #667085; }
+.auth-input:focus { border-color: rgba(196,147,255,.58); background: rgba(255,255,255,.05); box-shadow: 0 0 0 3px rgba(139,92,246,.13); }
 .metro-hero { isolation: isolate; background: radial-gradient(ellipse at 50% 39%, rgba(45, 23, 78, .22), transparent 47%), #07070d; }
 .metro-dot-field { z-index: 0; opacity: .21; background-image: radial-gradient(circle, rgba(232, 219, 255, .35) .75px, transparent .95px); background-size: 19px 19px; mask-image: linear-gradient(to bottom, transparent 0%, black 14%, black 88%, transparent 100%); }
 .metro-lighting { z-index: 1; opacity: .92; }

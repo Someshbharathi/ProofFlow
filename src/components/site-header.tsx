@@ -15,8 +15,8 @@ export function SiteHeader() {
       {links.map(link => <a key={link.label} className="metro-nav-link" href={link.href}>{link.label}</a>)}
     </nav>
     <div className="flex items-center justify-self-end gap-3 sm:gap-5">
-      <Link href="/dashboard" className="metro-login hidden text-[12px] font-medium text-slate-200 sm:inline-flex">Login</Link>
-      <Link href="/dashboard" className="metro-signup rounded-xl px-4 py-2 text-[11px] font-semibold text-white sm:px-5 sm:py-2.5">Sign Up</Link>
+      <Link href="/login" className="metro-login hidden text-[12px] font-medium text-slate-200 sm:inline-flex">Login</Link>
+      <Link href="/signup" className="metro-signup rounded-xl px-4 py-2 text-[11px] font-semibold text-white sm:px-5 sm:py-2.5">Sign Up</Link>
     </div>
   </header>;
 }

@@ -14,9 +14,8 @@
 /build
 /dist
 
-# local env files (commit examples only)
-.env*
-!.env.example
+# local env files (never commit credentials)
+.env.local
 
 # logs
 npm-debug.log*
