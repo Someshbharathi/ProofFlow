@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
   Bell, Bot, ChartNoAxesCombined, ChevronDown, Compass, FileCheck2,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { DemoPill, StatCard } from "@/components/dashboard/dashboard-ui";
 import { WalletConnectionControl } from "@/components/wallet/wallet-connection-control";
+import { NotificationsMenu } from "@/components/dashboard/notifications-menu";
 import { useWallet } from "@/components/wallet/wallet-provider";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthIdentity } from "@/components/auth/auth-identity";
@@ -19,7 +20,7 @@ export type DashboardStat = { label: string; value: string; unit: string; delta:
 
 const navIcons = {
   LayoutDashboard, FolderKanban, Plus, Milestone, Wallet, ReceiptText, Bot, Settings2,
-  Compass, FileCheck2, Users, Shield, Scale, ChartNoAxesCombined,
+  Compass, FileCheck2, Users, Shield, Scale, ChartNoAxesCombined, Bell,
 };
 
 function NetworkSelector() {
@@ -63,15 +64,8 @@ function AccountMenu({ name, initials }: { name: string; initials: string }) {
   </div>;
 }
 
-function Notifications() {
-  const [open, setOpen] = useState(false);
-  return <div className="relative">
-    <button onClick={() => setOpen(!open)} aria-label="Notifications" aria-expanded={open} className="grid size-7 place-items-center rounded-lg text-slate-400 transition hover:bg-white/[.06] hover:text-white"><Bell aria-hidden="true" size={14} /></button>
-    {open && <div className="absolute right-0 top-11 z-40 w-56 rounded-xl border border-white/10 bg-[#151827] p-3 shadow-2xl"><p className="text-[10px] font-medium text-slate-200">Notifications</p><p className="mt-2 text-[9px] text-slate-500">No live notifications in this demo workspace.</p></div>}
-  </div>;
-}
-
 function Sidebar({ role, nav, setDrawerOpen }: { role: string; nav: DashboardNavItem[]; setDrawerOpen: (open: boolean) => void }) {
+  const pathname = usePathname();
   const settings = nav.find(item => item.label === "Settings");
   const mainLinks = nav.filter(item => item.label !== "Settings");
   return <>
@@ -83,7 +77,7 @@ function Sidebar({ role, nav, setDrawerOpen }: { role: string; nav: DashboardNav
     <nav aria-label={`${role} navigation`} className="flex-1 overflow-y-auto px-2">
       {mainLinks.map(({ label, href, icon }) => {
         const Icon = navIcons[icon as keyof typeof navIcons] ?? LayoutDashboard;
-        const active = label === "Overview";
+        const active = pathname === href || (href !== `/${role}/dashboard` && pathname.startsWith(`${href}/`));
         return <Link onClick={() => setDrawerOpen(false)} key={label} href={href} aria-current={active ? "page" : undefined} className={`group mb-0.5 flex items-center gap-2 rounded-lg px-2 py-[7px] text-[10px] transition duration-200 ${active ? "bg-gradient-to-r from-violet-500/35 to-violet-400/15 text-white shadow-[inset_0_0_0_1px_rgba(167,139,250,.15)]" : "text-slate-400 hover:bg-white/[.045] hover:text-slate-100"}`}>
           <Icon aria-hidden="true" size={12} className={active ? "text-violet-200" : "text-slate-500 group-hover:text-slate-300"} />{label}
         </Link>;
@@ -93,9 +87,11 @@ function Sidebar({ role, nav, setDrawerOpen }: { role: string; nav: DashboardNav
   </>;
 }
 
-export function DashboardLayout({ role, title, description, nav, name, initials, stats, middleLeft, middleRight, bottomLeft, bottomRight }: {
+export function DashboardLayout({ role, title, description, nav, name, initials, stats, middleLeft, middleRight, bottomLeft, bottomRight, dataLabel, pageContent }: {
   role: string; title: string; description: string; nav: DashboardNavItem[]; name: string; initials: string;
-  stats: DashboardStat[]; middleLeft: ReactNode; middleRight: ReactNode; bottomLeft: ReactNode; bottomRight: ReactNode;
+  stats?: DashboardStat[]; middleLeft?: ReactNode; middleRight?: ReactNode; bottomLeft?: ReactNode; bottomRight?: ReactNode;
+  dataLabel?: string;
+  pageContent?: ReactNode;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const authenticatedName = useAuthIdentity() ?? name;
@@ -108,14 +104,14 @@ export function DashboardLayout({ role, title, description, nav, name, initials,
     <div className="relative min-h-screen md:pl-[150px]">
       <header className="sticky top-0 z-20 flex h-[40px] items-center justify-between border-b border-white/[.07] bg-[#090911]/90 px-3 backdrop-blur-xl sm:px-4">
         <div className="flex items-center gap-3"><button onClick={() => setDrawerOpen(!drawerOpen)} aria-label="Open navigation" aria-expanded={drawerOpen} className="grid size-8 place-items-center rounded-lg text-slate-300 transition hover:bg-white/[.06] md:hidden"><Menu aria-hidden="true" size={18} /></button><Link href="/" aria-label="ProofFlow home" className="grid size-7 place-items-center rounded-lg bg-gradient-to-br from-violet-400 to-fuchsia-600 text-white md:hidden"><Zap aria-hidden="true" size={15} fill="currentColor" /></Link><span className="hidden text-sm font-semibold tracking-tight sm:inline md:hidden">ProofFlow</span></div>
-        <div className="flex items-center gap-1 sm:gap-2"><NetworkSelector /><WalletConnectionControl /><Notifications /><AccountMenu name={authenticatedName} initials={authenticatedInitials} /></div>
+        <div className="flex items-center gap-1 sm:gap-2"><NetworkSelector /><WalletConnectionControl /><NotificationsMenu /><AccountMenu name={authenticatedName} initials={authenticatedInitials} /></div>
       </header>
-      <main className="relative px-4 pb-6 pt-3 sm:px-4 sm:pt-3">
-        <div className="mb-3 flex items-start justify-between gap-3"><div><h1 className="text-[18px] font-semibold tracking-[-.035em] sm:text-[19px]">{displayTitle}</h1><p className="mt-0.5 text-[9px] text-slate-400 sm:text-[10px]">{description}</p></div><DemoPill /></div>
-        <section aria-label="Demo statistics" className="grid grid-cols-2 gap-2 md:grid-cols-4">{stats.map(stat => <StatCard key={stat.label} {...stat} />)}</section>
+      {pageContent !== undefined ? <main className="relative px-4 pb-6 pt-3 sm:px-4 sm:pt-3"><div className="mb-3 flex items-start justify-between gap-3"><div><h1 className="text-[18px] font-semibold tracking-[-.035em] sm:text-[19px]">{displayTitle}</h1><p className="mt-0.5 text-[9px] text-slate-400 sm:text-[10px]">{description}</p></div><DemoPill label={dataLabel} /></div>{pageContent}</main> : <main className="relative px-4 pb-6 pt-3 sm:px-4 sm:pt-3">
+        <div className="mb-3 flex items-start justify-between gap-3"><div><h1 className="text-[18px] font-semibold tracking-[-.035em] sm:text-[19px]">{displayTitle}</h1><p className="mt-0.5 text-[9px] text-slate-400 sm:text-[10px]">{description}</p></div><DemoPill label={dataLabel} /></div>
+        <section aria-label="Demo statistics" className="grid grid-cols-2 gap-2 md:grid-cols-4">{(stats ?? []).map(stat => <StatCard key={stat.label} {...stat} />)}</section>
         <section aria-label="Dashboard overview" className="mt-3 grid items-stretch gap-3 md:grid-cols-2"><div className="min-w-0">{middleLeft}</div><div className="min-w-0">{middleRight}</div></section>
         <section aria-label="Dashboard activity" className="mt-3 grid items-stretch gap-3 md:grid-cols-2"><div className="min-w-0">{bottomLeft}</div><div className="min-w-0">{bottomRight}</div></section>
-      </main>
+      </main>}
     </div>
   </div>;
 }

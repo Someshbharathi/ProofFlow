@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChartPanel, DemoPill } from "@/components/dashboard/dashboard-ui";
 import { earningsHistory, platformActivity } from "@/lib/dashboard-data";
+import type { ProjectRecord } from "@/lib/projects";
 
 function SparkChart({ values, labels, yLabels, color = "#b157f3", maxValue = 100 }: { values: number[]; labels: string[]; yLabels: string[]; color?: string; maxValue?: number }) {
   const width = 640;
@@ -43,17 +44,25 @@ export function ActivityChart() {
   </ChartPanel>;
 }
 
-export function ProjectProgressOverview() {
-  const segments = "conic-gradient(#a855f7 0 50%, #6cbd8a 50% 75%, #51a983 75% 100%)";
-  return <ChartPanel title="Project Progress" description="Demo project status summary" action={<DemoPill />}>
-    <div className="flex min-h-[116px] items-center justify-center gap-4 sm:gap-6">
-      <div role="img" aria-label="Four demo projects: two in progress, one in review, one completed" className="relative grid size-[88px] shrink-0 place-items-center rounded-full" style={{ background: segments }}>
-        <div className="grid size-[66px] place-items-center rounded-full bg-[#12111d] text-center"><div><p className="text-base font-semibold">4</p><p className="text-[8px] text-slate-400">Projects</p></div></div>
+export function ProjectProgressOverview({ projects, error }: { projects: ProjectRecord[] | null; error?: string | null }) {
+  const milestoneRows = (projects ?? []).flatMap(project => project.project_milestones ?? []);
+  const total = milestoneRows.length;
+  const completed = milestoneRows.filter(milestone => milestone.status === "completed").length;
+  const remaining = total - completed;
+  const ratio = total > 0 ? completed / total : 0;
+  const percent = Math.round(ratio * 100);
+  const segments = total > 0
+    ? `conic-gradient(#64bd88 0 ${ratio * 100}%, #a855f7 ${ratio * 100}% 100%)`
+    : "conic-gradient(#a855f7 0 100%)";
+  return <ChartPanel title="Project Progress" description="Live milestone completion across recent projects" action={<span className="rounded-md border border-emerald-300/15 bg-emerald-300/[.06] px-2 py-1 text-[8px] text-emerald-200">LIVE PROJECT DATA</span>}>
+    {error ? <div role="alert" className="grid min-h-[116px] place-items-center px-4 text-center text-[10px] leading-5 text-amber-100">{error}</div> : <div className="flex min-h-[116px] items-center justify-center gap-4 sm:gap-6">
+      <div role="img" aria-label={`${percent}% of ${total} milestones completed`} className="relative grid size-[88px] shrink-0 place-items-center rounded-full" style={{ background: segments }}>
+        <div className="grid size-[66px] place-items-center rounded-full bg-[#12111d] text-center"><div><p className="text-base font-semibold">{percent}%</p><p className="text-[8px] text-slate-400">complete</p></div></div>
       </div>
       <ul className="space-y-3 text-[10px]">
-        {[{ label: "In Progress", count: "2", color: "bg-fuchsia-400" }, { label: "Review", count: "1", color: "bg-emerald-300" }, { label: "Completed", count: "1", color: "bg-emerald-500" }].map(item => <li key={item.label} className="flex items-center gap-2"><span className={`size-2 rounded-full ${item.color}`} /><span className="min-w-[76px] text-slate-300">{item.label}</span><span className="font-medium text-white">{item.count}</span></li>)}
+        {[{ label: "Completed", count: completed, color: "bg-emerald-300" }, { label: "Remaining", count: remaining, color: "bg-fuchsia-400" }, { label: "Projects", count: projects?.length ?? 0, color: "bg-blue-300" }].map(item => <li key={item.label} className="flex items-center gap-2"><span className={`size-2 rounded-full ${item.color}`} /><span className="min-w-[64px] text-slate-300">{item.label}</span><span className="font-medium text-white">{item.count}</span></li>)}
       </ul>
-    </div>
+    </div>}
   </ChartPanel>;
 }
 

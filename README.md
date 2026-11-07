@@ -35,7 +35,7 @@ src/
   app/                 App Router pages and global styles
   components/          Shared site UI and role-agnostic dashboard layout
   lib/                 Role-specific demo data, auth and Supabase utilities
-supabase/migrations/   Profile table, role constraints, trigger and RLS
+supabase/migrations/   Auth profiles and role-protected project/milestone schema
 ```
 
 The client, freelancer, and admin overview routes use the same `DashboardLayout` and section components; only their role data and panel content differ. Dashboard content lives in `src/lib/dashboard-data.ts` and is explicitly illustrative. It is not sourced from a wallet or chain and does not represent real balances or activity. Phantom can share its public address when the user approves a connection; dashboard actions remain local UI demonstrations, and AI features do not generate responses. Sidebar destinations without an implemented workflow lead to a marked placeholder route. Local `.env*` files are ignored by Git.
@@ -48,11 +48,17 @@ The client, freelancer, and admin overview routes use the same `DashboardLayout`
 4. Add `http://localhost:3000/auth/callback` and your production callback URL to the Supabase Auth redirect URL allow list. Set the Site URL to the matching app origin.
 5. For Google, create a Web OAuth client in Google Cloud. Add your app origin to Authorized JavaScript origins and the Supabase Auth callback URL shown in the Google provider settings to Authorized redirect URIs. Enter the Google client ID and secret in Supabase Auth → Providers → Google and enable the provider. Do not add Google secrets to this repository.
 6. In the Supabase SQL editor, run [`supabase/migrations/202611070001_profiles_auth.sql`](supabase/migrations/202611070001_profiles_auth.sql). It creates `profiles`, a signup trigger, role immutability through grants/RLS, and the one-time OAuth role completion function.
-7. Restart the Next.js server after changing `.env.local` (and rebuild production output after changing public env values), then use `/signup` and `/login`.
+7. Run [`supabase/migrations/202611080001_projects_and_milestones.sql`](supabase/migrations/202611080001_projects_and_milestones.sql) to install the role-checked project and milestone tables, read policies, and atomic project creation RPC. The RPC accepts only a confirmed Client profile and derives the owner from the signed-in session.
+8. Run [`supabase/migrations/202611080002_applications_invitations.sql`](supabase/migrations/202611080002_applications_invitations.sql) for Freelancer applications, Client invitations, memberships and in-app notifications. Mutations are performed through role-checked database functions; profile RLS is unchanged.
+9. Restart the Next.js server after changing `.env.local` (and rebuild production output after changing public env values), then use `/signup` and `/login`.
 
 Public signup supports Client and Freelancer only. The profile trigger ignores any other requested role; Admin promotion is an operator-only action in Supabase SQL after verifying the user's auth ID, for example: `update public.profiles set role = 'admin', role_confirmed = true where id = '<verified-auth-user-uuid>';`. Never expose that operation through a public client endpoint. Authenticated users can read only their own profile and update only their own full name/avatar fields. Dashboard role layouts verify the Supabase user and profile on the server; middleware refreshes SSR cookies. OAuth callback role values are allow-listed to Client/Freelancer, and existing confirmed roles are preserved.
 
 Google OAuth and live account/session tests require the external Supabase and Google provider setup above. This repository does not contain credentials and does not claim those provider settings are configured.
+
+### Project discovery phase
+
+After applying all three migrations and signing in with confirmed Client and Freelancer accounts, a Freelancer can apply to an open project, and a Client can accept/reject applications or send/cancel invitations. The first successful acceptance wins: the database locks the project, accepts the selected application or invitation, rejects all other pending applications, cancels other pending invitations, creates the single active membership, and moves the project to `in_progress` atomically. Freelancers can accept/decline invitations and withdraw pending applications. Only assigned Freelancers can read in-progress projects and their milestones. Public profile policies remain private; Client workflow RPCs return only Freelancer display name and avatar for a project the Client owns. Notifications are in-app only. Earnings, escrow, payments, and transaction figures remain demo data; no SOL transfer or escrow operation is part of this phase.
 
 Wallet and read-only balance state are shared from `src/components/wallet/wallet-provider.tsx`. Phantom must be installed in the browser (or use Phantom's in-app browser on mobile). Only the public key is read from Phantom. ProofFlow calls the fixed `https://api.devnet.solana.com` endpoint and checks its genesis hash before requesting that address's SOL balance. Phantom's documented injected provider does not expose its selected Solana cluster, so the app cannot verify that setting; the UI warns users to confirm Devnet in Phantom. A Devnet RPC balance is not proof of Phantom's selected cluster. No private key, recovery phrase, signature, or transaction is requested. Devnet SOL is test-only and has no real monetary value.
 

@@ -4,8 +4,8 @@ import { useState, type ReactNode } from "react";
 import { Activity, ArrowDownLeft, ArrowRight, ArrowUpRight, Check, CheckCircle2, Clock3, Coins, FolderKanban, Layers, LockKeyhole, Shield, Users, Wallet, WalletCards } from "lucide-react";
 import type { Project, Transaction } from "@/lib/dashboard-data";
 
-export function DemoPill() {
-  return <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/15 bg-violet-300/[.07] px-2.5 py-1 text-[9px] font-medium tracking-wide text-violet-200"><span aria-hidden="true" className="size-1.5 rounded-full bg-violet-300" /> DEMO DATA</span>;
+export function DemoPill({ label = "DEMO DATA" }: { label?: string }) {
+  return <span className="inline-flex items-center gap-2 rounded-full border border-violet-300/15 bg-violet-300/[.07] px-2.5 py-1 text-[9px] font-medium tracking-wide text-violet-200"><span aria-hidden="true" className="size-1.5 rounded-full bg-violet-300" /> {label}</span>;
 }
 
 export function StatCard({ label, value, unit, delta, icon, tone }: { label: string; value: string; unit: string; delta: string; icon: string; tone?: string }) {
